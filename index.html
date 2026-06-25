@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geschiedenis Flashcards</title>
+  <title>Geschiedenis flashcards</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,7 +24,6 @@
       min-height: 100vh;
     }
 
-    /* ── Header ─────────────────────────── */
     header {
       background: var(--accent);
       color: #fff;
@@ -34,7 +33,6 @@
     header h1 { font-size: 1.9rem; letter-spacing: .02em; }
     header p  { margin-top: .4rem; font-size: 1rem; opacity: .85; font-style: italic; }
 
-    /* ── Back button (topic view only) ── */
     #btn-back {
       display: none;
       background: none;
@@ -67,7 +65,6 @@
       font-family: sans-serif;
     }
 
-    /* ── Class grid ─────────────────────── */
     #class-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -97,7 +94,6 @@
       color: var(--text);
     }
 
-    /* ── Topic list ─────────────────────── */
     #topic-section { display: none; }
 
     #topic-list {
@@ -160,13 +156,11 @@
 </header>
 
 <main>
-  <!-- Step 1: class picker -->
   <section id="class-section">
     <p class="section-label">Kies jouw klas</p>
     <div id="class-grid"></div>
   </section>
 
-  <!-- Step 2: topic list -->
   <section id="topic-section">
     <p class="section-label" id="topic-label">Onderwerpen</p>
     <div id="topic-list"></div>
@@ -183,7 +177,6 @@
   const btnBack      = document.getElementById('btn-back');
   const headerSub    = document.getElementById('header-sub');
 
-  // ── Build class picker ────────────────────────────────────────────────────
   KLASSEN.forEach(klas => {
     const btn = document.createElement('button');
     btn.className = 'class-btn';
@@ -213,7 +206,7 @@
         const res = await fetch('data/' + topic.id + '.json');
         const cards = await res.json();
         count = cards.length;
-      } catch { /* JSON nog niet aangemaakt */ }
+      } catch { }
 
       const rawKnown = localStorage.getItem('known_' + topic.id);
       const knownCount = rawKnown ? JSON.parse(rawKnown).length : 0;
