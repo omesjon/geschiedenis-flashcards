@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geschiedenis Flashcards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fdf6ee;
+      --surface: #ffffff;
+      --border: #e8d9c5;
+      --text: #2c1e0f;
+      --text-muted: #7a6250;
+      --accent: #b5451b;
+      --shadow: 0 2px 12px rgba(44,30,15,.10);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────── */
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 2rem 1.5rem 1.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.9rem; letter-spacing: .02em; }
+    header p  { margin-top: .4rem; font-size: 1rem; opacity: .85; font-style: italic; }
+
+    /* ── Back button (topic view only) ── */
+    #btn-back {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      position: absolute;
+      left: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: .2rem .4rem;
+      line-height: 1;
+    }
+    header { position: relative; }
+
+    main {
+      max-width: 680px;
+      margin: 2.5rem auto;
+      padding: 0 1.25rem 3rem;
+    }
+
+    .section-label {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 1.2rem;
+      font-weight: normal;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      font-family: sans-serif;
+    }
+
+    /* ── Class grid ─────────────────────── */
+    #class-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .class-btn {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 1.6rem 1rem;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+      font-family: 'Georgia', serif;
+    }
+    .class-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 22px rgba(44,30,15,.15);
+      border-color: var(--accent);
+    }
+    .class-btn .class-name {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    /* ── Topic list ─────────────────────── */
+    #topic-section { display: none; }
+
+    #topic-list {
+      display: flex;
+      flex-direction: column;
+      gap: .9rem;
+    }
+
+    .topic-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+    }
+    .topic-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(44,30,15,.14);
+      border-color: var(--accent);
+    }
+
+    .topic-dot {
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-right: 1rem;
+    }
+
+    .topic-info { flex: 1; }
+    .topic-info strong { display: block; font-size: 1.1rem; }
+    .topic-info span   { display: block; font-size: .85rem; color: var(--text-muted); margin-top: .2rem; font-family: sans-serif; }
+
+    .topic-meta {
+      font-family: sans-serif;
+      font-size: .8rem;
+      color: var(--text-muted);
+      text-align: right;
+      flex-shrink: 0;
+      margin-left: 1rem;
+    }
+    .topic-meta .count { font-size: 1.2rem; font-weight: bold; color: var(--text); display: block; }
+    .topic-meta .known { color: #27ae60; font-size: .75rem; }
+
+    .arrow { font-size: 1.3rem; color: var(--accent); margin-left: .8rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <button id="btn-back" onclick="showClassPicker()" title="Terug">‹</button>
+  <h1>📚 Geschiedenis flashcards</h1>
+  <p id="header-sub">Kies je klas</p>
+</header>
+
+<main>
+  <!-- Step 1: class picker -->
+  <section id="class-section">
+    <p class="section-label">Kies jouw klas</p>
+    <div id="class-grid"></div>
+  </section>
+
+  <!-- Step 2: topic list -->
+  <section id="topic-section">
+    <p class="section-label" id="topic-label">Onderwerpen</p>
+    <div id="topic-list"></div>
+  </section>
+</main>
+
+<script src="topics.js"></script>
+<script>
+  const classGrid    = document.getElementById('class-grid');
+  const classSection = document.getElementById('class-section');
+  const topicSection = document.getElementById('topic-section');
+  const topicList    = document.getElementById('topic-list');
+  const topicLabel   = document.getElementById('topic-label');
+  const btnBack      = document.getElementById('btn-back');
+  const headerSub    = document.getElementById('header-sub');
+
+  // ── Build class picker ────────────────────────────────────────────────────
+  KLASSEN.forEach(klas => {
+    const btn = document.createElement('button');
+    btn.className = 'class-btn';
+    btn.innerHTML = `<span class="class-name">${klas.naam}</span>`;
+    btn.addEventListener('click', () => showTopics(klas));
+    classGrid.appendChild(btn);
+  });
+
+  function showClassPicker() {
+    classSection.style.display = 'block';
+    topicSection.style.display = 'none';
+    btnBack.style.display = 'none';
+    headerSub.textContent = 'Kies je klas';
+  }
+
+  async function showTopics(klas) {
+    classSection.style.display = 'none';
+    topicSection.style.display = 'block';
+    btnBack.style.display = 'block';
+    topicLabel.textContent = klas.naam;
+    headerSub.textContent = 'Kies een onderwerp om te oefenen';
+    topicList.innerHTML = '';
+
+    for (const topic of klas.onderwerpen) {
+      let count = '?';
+      try {
+        const res = await fetch('data/' + topic.id + '.json');
+        const cards = await res.json();
+        count = cards.length;
+      } catch { /* JSON nog niet aangemaakt */ }
+
+      const rawKnown = localStorage.getItem('known_' + topic.id);
+      const knownCount = rawKnown ? JSON.parse(rawKnown).length : 0;
+
+      const a = document.createElement('a');
+      a.className = 'topic-card';
+      a.href = `flashcard.html?topic=${encodeURIComponent(topic.id)}`;
+      a.innerHTML = `
+        <span class="topic-dot" style="background:${topic.kleur || '#b5451b'}"></span>
+        <span class="topic-info">
+          <strong>${topic.titel}</strong>
+          <span>${topic.beschrijving}</span>
+        </span>
+        <span class="topic-meta">
+          <span class="count">${count}</span>
+          kaarten
+          ${knownCount > 0 ? `<span class="known">✓ ${knownCount} gekend</span>` : ''}
+        </span>
+        <span class="arrow">›</span>
+      `;
+      topicList.appendChild(a);
+    }
+  }
+</script>
+</body>
+</html>

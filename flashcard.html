@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flashcards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fdf6ee;
+      --surface: #ffffff;
+      --border: #e8d9c5;
+      --text: #2c1e0f;
+      --text-muted: #7a6250;
+      --accent: #b5451b;
+      --accent-hover: #8f3415;
+      --green: #27ae60;
+      --green-bg: #eafaf1;
+      --shadow: 0 4px 20px rgba(44,30,15,.13);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ───────────────────────── */
+    header {
+      background: var(--accent);
+      color: #fff;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+    header a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.4rem;
+      line-height: 1;
+      opacity: .85;
+    }
+    header a:hover { opacity: 1; }
+    header h1 { font-size: 1.1rem; flex: 1; }
+    #topic-color-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      opacity: .7;
+      flex-shrink: 0;
+    }
+
+    /* ── Progress bar ─────────────────── */
+    #progress-wrap {
+      background: var(--border);
+      height: 6px;
+    }
+    #progress-bar {
+      height: 6px;
+      background: var(--green);
+      transition: width .4s;
+      width: 0%;
+    }
+
+    /* ── Controls bar ─────────────────── */
+    #controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1.25rem;
+      background: var(--surface);
+      border-bottom: 1.5px solid var(--border);
+      gap: .6rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-group { display: flex; gap: .5rem; align-items: center; }
+
+    button {
+      font-family: sans-serif;
+      font-size: .82rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .38rem .7rem;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      transition: background .15s, border-color .15s;
+    }
+    button:hover { background: var(--bg); border-color: var(--accent); }
+    button:active { transform: scale(.97); }
+    button.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    #btn-shuffle::before { content: '🔀 '; }
+    #btn-filter::before  { content: '🔍 '; }
+
+    /* ── Counter ─────────────────────── */
+    #counter {
+      font-family: sans-serif;
+      font-size: .85rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    #counter strong { color: var(--text); }
+
+    /* ── Card area ───────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1.25rem 2rem;
+    }
+
+    /* 3-D flip container */
+    #card-scene {
+      width: 100%;
+      max-width: 560px;
+      perspective: 1200px;
+      cursor: pointer;
+    }
+
+    #card {
+      position: relative;
+      width: 100%;
+      min-height: 260px;
+      transform-style: preserve-3d;
+      transition: transform .5s cubic-bezier(.4,0,.2,1);
+    }
+    #card.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      min-height: 260px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 16px;
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.8rem;
+      text-align: center;
+    }
+    .card-face.front {
+      background: var(--surface);
+    }
+    .card-face.back {
+      background: #fffbf5;
+      transform: rotateY(180deg);
+    }
+
+    .card-label {
+      font-family: sans-serif;
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .9rem;
+    }
+    .card-text {
+      font-size: 1.25rem;
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .card-face.back .card-text { font-size: 1.1rem; }
+
+    .flip-hint {
+      margin-top: 1.2rem;
+      font-family: sans-serif;
+      font-size: .78rem;
+      color: var(--text-muted);
+      opacity: .7;
+    }
+
+    /* Known badge on back */
+    #known-wrap {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      /* shown on back face, but we manage via JS */
+    }
+
+    /* ── Known toggle button ─────────── */
+    #btn-known {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-top: 1.4rem;
+      padding: .55rem 1.2rem;
+      font-size: .9rem;
+      border-radius: 24px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all .2s;
+      font-family: sans-serif;
+    }
+    #btn-known.known {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    #btn-known:hover { border-color: var(--green); }
+
+    /* ── Nav buttons ─────────────────── */
+    #nav {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.2rem;
+      align-items: center;
+    }
+    #btn-prev, #btn-next {
+      font-size: 1.5rem;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+    }
+    #btn-prev:disabled, #btn-next:disabled { opacity: .3; cursor: default; }
+
+    /* ── Empty state ──────────────────── */
+    #empty {
+      display: none;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      font-family: sans-serif;
+      color: var(--text-muted);
+    }
+    #empty h2 { font-size: 1.1rem; margin-bottom: .6rem; color: var(--green); }
+
+    /* ── Known indicator on card ─────── */
+    .known-badge {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      font-size: 1.3rem;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .known-badge.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" title="Terug naar overzicht">‹</a>
+  <span id="topic-color-dot"></span>
+  <h1 id="topic-title">Laden…</h1>
+</header>
+
+<div id="progress-wrap"><div id="progress-bar"></div></div>
+
+<div id="controls">
+  <div class="ctrl-group">
+    <button id="btn-shuffle">Schudden</button>
+    <button id="btn-filter">Alleen onbekend</button>
+  </div>
+  <span id="counter">–</span>
+</div>
+
+<main>
+  <div id="card-scene">
+    <div id="card">
+      <div class="card-face front">
+        <span class="card-label">Vraag</span>
+        <p class="card-text" id="question-text"></p>
+        <span class="flip-hint">Tik om te omdraaien</span>
+      </div>
+      <div class="card-face back">
+        <span class="known-badge" id="known-badge">✅</span>
+        <span class="card-label">Antwoord</span>
+        <p class="card-text" id="answer-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <button id="btn-known">
+    <span id="known-icon">☐</span>
+    <span id="known-label">Ik ken dit</span>
+  </button>
+
+  <div id="nav">
+    <button id="btn-prev" title="Vorige">‹</button>
+    <button id="btn-next" title="Volgende">›</button>
+  </div>
+
+  <div id="empty">
+    <h2>🎉 Alle kaarten gekend!</h2>
+    <p>Zet de filter uit om alle kaarten opnieuw te oefenen.</p>
+    <button onclick="document.getElementById('btn-filter').click()" style="margin-top:1rem">Alle kaarten tonen</button>
+  </div>
+</main>
+
+<script>
+  // ── State ─────────────────────────────────────────────────────────────────
+  const params   = new URLSearchParams(location.search);
+  const topicId  = params.get('topic') || '';
+  let allCards   = [];      // original order
+  let deck       = [];      // current playable deck (filtered/shuffled)
+  let index      = 0;
+  let knownSet   = new Set();
+  let filterOnly = false;
+
+  const storageKey = 'known_' + topicId;
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const cardEl       = document.getElementById('card');
+  const questionEl   = document.getElementById('question-text');
+  const answerEl     = document.getElementById('answer-text');
+  const btnKnown     = document.getElementById('btn-known');
+  const knownIcon    = document.getElementById('known-icon');
+  const knownLabel   = document.getElementById('known-label');
+  const knownBadge   = document.getElementById('known-badge');
+  const btnPrev      = document.getElementById('btn-prev');
+  const btnNext      = document.getElementById('btn-next');
+  const btnShuffle   = document.getElementById('btn-shuffle');
+  const btnFilter    = document.getElementById('btn-filter');
+  const counter      = document.getElementById('counter');
+  const progressBar  = document.getElementById('progress-bar');
+  const emptyEl      = document.getElementById('empty');
+  const cardScene    = document.getElementById('card-scene');
+  const titleEl      = document.getElementById('topic-title');
+  const dotEl        = document.getElementById('topic-color-dot');
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function loadKnown() {
+    try { knownSet = new Set(JSON.parse(localStorage.getItem(storageKey)) || []); }
+    catch { knownSet = new Set(); }
+  }
+
+  function saveKnown() {
+    localStorage.setItem(storageKey, JSON.stringify([...knownSet]));
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function buildDeck() {
+    if (filterOnly) {
+      deck = allCards.filter((_, i) => !knownSet.has(i));
+    } else {
+      deck = [...allCards];
+    }
+    index = 0;
+  }
+
+  function showCard(flip = false) {
+    if (deck.length === 0) {
+      cardScene.style.display = 'none';
+      btnKnown.style.display  = 'none';
+      document.getElementById('nav').style.display = 'none';
+      emptyEl.style.display = 'block';
+      counter.textContent = '0 kaarten';
+      progressBar.style.width = '100%';
+      return;
+    }
+
+    cardScene.style.display = '';
+    btnKnown.style.display  = '';
+    document.getElementById('nav').style.display = '';
+    emptyEl.style.display = 'none';
+
+    // Unflip without animation first
+    cardEl.style.transition = flip ? '' : 'none';
+    cardEl.classList.remove('flipped');
+    // Re-enable transition after frame
+    if (!flip) requestAnimationFrame(() => cardEl.style.transition = '');
+
+    const card = deck[index];
+    questionEl.textContent = card.question;
+    answerEl.textContent   = card.answer;
+
+    const originalIndex = allCards.indexOf(card);
+    const isKnown = knownSet.has(originalIndex);
+    updateKnownUI(isKnown);
+
+    // Nav
+    btnPrev.disabled = index === 0;
+    btnNext.disabled = index === deck.length - 1;
+
+    // Counter
+    counter.innerHTML = `<strong>${index + 1}</strong> / ${deck.length}`;
+
+    // Progress bar = % of all cards known
+    const pct = allCards.length ? (knownSet.size / allCards.length) * 100 : 0;
+    progressBar.style.width = pct + '%';
+  }
+
+  function updateKnownUI(isKnown) {
+    if (isKnown) {
+      btnKnown.classList.add('known');
+      knownIcon.textContent  = '✅';
+      knownLabel.textContent = 'Gekend!';
+      knownBadge.classList.add('visible');
+    } else {
+      btnKnown.classList.remove('known');
+      knownIcon.textContent  = '☐';
+      knownLabel.textContent = 'Ik ken dit';
+      knownBadge.classList.remove('visible');
+    }
+  }
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  cardEl.addEventListener('click', () => {
+    cardEl.classList.toggle('flipped');
+  });
+
+  btnKnown.addEventListener('click', () => {
+    const card = deck[index];
+    const originalIndex = allCards.indexOf(card);
+    if (knownSet.has(originalIndex)) {
+      knownSet.delete(originalIndex);
+    } else {
+      knownSet.add(originalIndex);
+    }
+    saveKnown();
+    const isKnown = knownSet.has(originalIndex);
+    updateKnownUI(isKnown);
+
+    // Update progress bar immediately
+    const pct = allCards.length ? (knownSet.size / allCards.length) * 100 : 0;
+    progressBar.style.width = pct + '%';
+
+    // If filter is on and card was just marked known, move to next after brief delay
+    if (filterOnly && isKnown) {
+      setTimeout(() => {
+        deck.splice(index, 1);
+        if (index >= deck.length) index = Math.max(0, deck.length - 1);
+        showCard();
+      }, 600);
+    }
+  });
+
+  btnPrev.addEventListener('click', () => {
+    if (index > 0) { index--; showCard(); }
+  });
+
+  btnNext.addEventListener('click', () => {
+    if (index < deck.length - 1) { index++; showCard(); }
+  });
+
+  // Keyboard nav
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') btnNext.click();
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') btnPrev.click();
+    else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); cardEl.click(); }
+  });
+
+  btnShuffle.addEventListener('click', () => {
+    deck = shuffle(deck);
+    index = 0;
+    showCard();
+  });
+
+  btnFilter.addEventListener('click', () => {
+    filterOnly = !filterOnly;
+    btnFilter.classList.toggle('active', filterOnly);
+    btnFilter.textContent = (filterOnly ? '🔍 Alle kaarten' : '🔍 Alleen onbekend');
+    buildDeck();
+    showCard();
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  async function init() {
+    loadKnown();
+
+    // Find topic metadata from topics.js (already loaded via <script src>)
+    const topic = typeof ONDERWERPEN !== 'undefined'
+      ? ONDERWERPEN.find(t => t.id === topicId)
+      : null;
+
+    if (topic) {
+      titleEl.textContent = topic.titel;
+      document.title = topic.titel + ' – Flashcards';
+      if (topic.kleur) dotEl.style.background = topic.kleur;
+    } else {
+      titleEl.textContent = topicId;
+    }
+
+    try {
+      const res = await fetch('data/' + topicId + '.json');
+      if (!res.ok) throw new Error('Niet gevonden');
+      allCards = await res.json();
+    } catch {
+      cardScene.innerHTML = `<p style="text-align:center;padding:2rem;color:var(--text-muted);font-family:sans-serif">
+        Kon de kaarten voor <strong>${topicId}</strong> niet laden.</p>`;
+      return;
+    }
+
+    buildDeck();
+    showCard();
+  }
+
+  init();
+</script>
+
+<!-- Load topics.js for metadata (title, color) -->
+<script src="topics.js"></script>
+</body>
+</html>
