@@ -19,6 +19,7 @@ const KLASSEN = [
       { id: "4havo-7-2-eerste-wereldoorlog", titel: "7.2 – De Eerste Wereldoorlog", beschrijving: "Achterliggende oorzaken van de Eerste Wereldoorlog", kleur: "#1a6eb5" },
       { id: "4havo-staatsinrichting-grondwet-1848", titel: "Staatsinrichting – De grondwet van 1848", beschrijving: "Hoe en waarom Nederland in 1848 een nieuwe grondwet kreeg", kleur: "#2471a3" },
       { id: "4havo-staatsinrichting-pacificatie-1917", titel: "Staatsinrichting – De pacificatie van 1917", beschrijving: "Het compromis over de schoolstrijd en het kiesrecht", kleur: "#1a5276" },
+      { id: "4havo-7-5-opkomst-hitler", titel: "7.5 – De opkomst van Hitler", beschrijving: "Waarom het nationaalsocialisme populair werd in Duitsland", kleur: "#922b21" },
       { id: "lorem-4havo-1", titel: "Lorem Ipsum I",   beschrijving: "Dolor sit amet, consectetur adipiscing elit", kleur: "#1a6eb5" },
       { id: "lorem-4havo-2", titel: "Lorem Ipsum II",  beschrijving: "Sed do eiusmod tempor incididunt ut labore",   kleur: "#2980b9" },
       { id: "lorem-4havo-3", titel: "Lorem Ipsum III", beschrijving: "Ut enim ad minim veniam, quis nostrud",        kleur: "#16a085" },
