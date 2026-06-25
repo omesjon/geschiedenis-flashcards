@@ -16,6 +16,7 @@ const KLASSEN = [
     id: "4havo",
     naam: "4 havo",
     onderwerpen: [
+      { id: "4havo-7-2-eerste-wereldoorlog", titel: "7.2 – De Eerste Wereldoorlog", beschrijving: "Achterliggende oorzaken van de Eerste Wereldoorlog", kleur: "#1a6eb5" },
       { id: "lorem-4havo-1", titel: "Lorem Ipsum I",   beschrijving: "Dolor sit amet, consectetur adipiscing elit", kleur: "#1a6eb5" },
       { id: "lorem-4havo-2", titel: "Lorem Ipsum II",  beschrijving: "Sed do eiusmod tempor incididunt ut labore",   kleur: "#2980b9" },
       { id: "lorem-4havo-3", titel: "Lorem Ipsum III", beschrijving: "Ut enim ad minim veniam, quis nostrud",        kleur: "#16a085" },
